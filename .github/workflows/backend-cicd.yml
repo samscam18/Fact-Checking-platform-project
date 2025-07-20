@@ -14,14 +14,11 @@ on:
   workflow_dispatch: # Allows manual triggering from GitHub UI
 
 env:
-  JAVA_VERSION: '17' # Specify your Java version
-  SPRING_BOOT_APP_PATH: './backend' # Path to your Spring Boot application
-  DOCKER_IMAGE_NAME: 'fact-checking-backend' # Name for your Docker image (keep this)
-  DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }} # Your Docker Hub username from GitHub Secrets
-  DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_PASSWORD }} # Your Docker Hub token from GitHub Secrets
-  # Define DOCKER_IMAGE_FULL_NAME once, using your actual Docker Hub username directly
-  # IMPORTANT: REPLACE 'samscam18' WITH YOUR ACTUAL DOCKER HUB USERNAME
-  DOCKER_IMAGE_FULL_NAME: 'samscam18/fact-checking-backend' # <--- CORRECTED AND SINGLE DEFINITION
+  JAVA_VERSION: '17'
+  SPRING_BOOT_APP_PATH: './backend'
+  DOCKER_IMAGE_NAME: 'fact-checking-backend' # Keep this for reference
+  DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_PASSWORD }}
 
 jobs:
   build-and-push:
@@ -51,14 +48,16 @@ jobs:
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
-          context: ${{ env.SPRING_BOOT_APP_PATH }} # Context for Docker build is the backend directory
-          push: true # Push the image to Docker Hub
+          context: ${{ env.SPRING_BOOT_APP_PATH }}
+          push: true
+          # IMPORTANT: REPLACE 'samscam18' WITH YOUR ACTUAL DOCKER HUB USERNAME
           tags: |
-            ${{ env.DOCKER_IMAGE_FULL_NAME }}:latest
-            ${{ env.DOCKER_IMAGE_FULL_NAME }}:${{ github.sha }} # Tag with commit SHA for unique versioning
-          platforms: linux/amd64 # Specify platform for compatibility
+            samscam18/${{ env.DOCKER_IMAGE_NAME }}:latest # <--- CORRECTED TAGS
+            samscam18/${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }} # <--- CORRECTED TAGS
+          platforms: linux/amd64
 
       - name: Verify Docker Image Push (Optional)
         run: |
-          echo "Docker image ${{ env.DOCKER_IMAGE_FULL_NAME }}:latest pushed successfully!"
-          echo "You can view it on Docker Hub: https://hub.docker.com/r/${{ env.DOCKER_HUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}/tags"
+          # IMPORTANT: REPLACE 'samscam18' WITH YOUR ACTUAL DOCKER HUB USERNAME
+          echo "Docker image samscam18/${{ env.DOCKER_IMAGE_NAME }}:latest pushed successfully!"
+          echo "You can view it on Docker Hub: https://hub.docker.com/r/samscam18/${{ env.DOCKER_IMAGE_NAME }}/tags"

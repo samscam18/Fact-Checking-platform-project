@@ -14,13 +14,10 @@ on:
   workflow_dispatch: # Allows manual triggering from GitHub UI
 
 env:
-  FRONTEND_APP_PATH: './frontend' # Path to your frontend application
-  DOCKER_IMAGE_NAME: 'fact-checking-frontend' # Name for your Docker image (keep this)
-  DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }} # Your Docker Hub username from GitHub Secrets
-  DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_PASSWORD }} # Your Docker Hub token from GitHub Secrets
-  # Define DOCKER_IMAGE_FULL_NAME once, using your actual Docker Hub username directly
-  # IMPORTANT: REPLACE 'samscam18' WITH YOUR ACTUAL DOCKER HUB USERNAME
-  DOCKER_IMAGE_FULL_NAME: 'samscam18/fact-checking-frontend' # <--- CORRECTED AND SINGLE DEFINITION
+  FRONTEND_APP_PATH: './frontend'
+  DOCKER_IMAGE_NAME: 'fact-checking-frontend' # Keep this for reference
+  DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_PASSWORD }}
   
 
 jobs:
@@ -40,14 +37,16 @@ jobs:
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
-          context: ${{ env.FRONTEND_APP_PATH }} # Context for Docker build is the frontend directory
-          push: true # Push the image to Docker Hub
+          context: ${{ env.FRONTEND_APP_PATH }}
+          push: true
+          # IMPORTANT: REPLACE 'samscam18' WITH YOUR ACTUAL DOCKER HUB USERNAME
           tags: |
-            ${{ env.DOCKER_IMAGE_FULL_NAME }}:latest
-            ${{ env.DOCKER_IMAGE_FULL_NAME }}:${{ github.sha }} # Tag with commit SHA for unique versioning
-          platforms: linux/amd64 # Specify platform for compatibility
+            samscam18/${{ env.DOCKER_IMAGE_NAME }}:latest # <--- CORRECTED TAGS
+            samscam18/${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }} # <--- CORRECTED TAGS
+          platforms: linux/amd64
 
       - name: Verify Docker Image Push (Optional)
         run: |
-          echo "Docker image ${{ env.DOCKER_IMAGE_FULL_NAME }}:latest pushed successfully!"
-          echo "You can view it on Docker Hub: https://hub.docker.com/r/${{ env.DOCKER_HUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}/tags"
+          # IMPORTANT: REPLACE 'samscam18' WITH YOUR ACTUAL DOCKER HUB USERNAME
+          echo "Docker image samscam18/${{ env.DOCKER_IMAGE_NAME }}:latest pushed successfully!"
+          echo "You can view it on Docker Hub: https://hub.docker.com/r/samscam18/${{ env.DOCKER_IMAGE_NAME }}/tags"

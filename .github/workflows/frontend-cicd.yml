@@ -15,11 +15,13 @@ on:
 
 env:
   FRONTEND_APP_PATH: './frontend' # Path to your frontend application
-  DOCKER_IMAGE_FULL_NAME: 'samscam18/${{ env.DOCKER_IMAGE_NAME }}'
+  DOCKER_IMAGE_NAME: 'fact-checking-frontend' # Name for your Docker image (keep this)
   DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }} # Your Docker Hub username from GitHub Secrets
   DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_PASSWORD }} # Your Docker Hub token from GitHub Secrets
-  # IMPORTANT: Replace 'your-dockerhub-username' with your actual Docker Hub username
-  DOCKER_IMAGE_FULL_NAME: 'your-dockerhub-username/${{ env.DOCKER_IMAGE_NAME }}'
+  # Define DOCKER_IMAGE_FULL_NAME once, using your actual Docker Hub username directly
+  # IMPORTANT: REPLACE 'samscam18' WITH YOUR ACTUAL DOCKER HUB USERNAME
+  DOCKER_IMAGE_FULL_NAME: 'samscam18/fact-checking-frontend' # <--- CORRECTED AND SINGLE DEFINITION
+  
 
 jobs:
   build-and-push:

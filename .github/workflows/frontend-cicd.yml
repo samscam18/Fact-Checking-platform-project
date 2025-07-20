@@ -1,0 +1,51 @@
+name: Frontend CI/CD
+
+on:
+  push:
+    branches:
+      - main # Trigger on pushes to the main branch
+    paths:
+      - 'frontend/**' # Only run if changes are detected in the frontend folder
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+  workflow_dispatch: # Allows manual triggering from GitHub UI
+
+env:
+  FRONTEND_APP_PATH: './frontend' # Path to your frontend application
+  DOCKER_IMAGE_FULL_NAME: 'samscam18/${{ env.DOCKER_IMAGE_NAME }}'
+  DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }} # Your Docker Hub username from GitHub Secrets
+  DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_PASSWORD }} # Your Docker Hub token from GitHub Secrets
+  # IMPORTANT: Replace 'your-dockerhub-username' with your actual Docker Hub username
+  DOCKER_IMAGE_FULL_NAME: 'your-dockerhub-username/${{ env.DOCKER_IMAGE_NAME }}'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest # Use a fresh Ubuntu runner
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKER_HUB_USERNAME }}
+          password: ${{ env.DOCKER_HUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ env.FRONTEND_APP_PATH }} # Context for Docker build is the frontend directory
+          push: true # Push the image to Docker Hub
+          tags: |
+            ${{ env.DOCKER_IMAGE_FULL_NAME }}:latest
+            ${{ env.DOCKER_IMAGE_FULL_NAME }}:${{ github.sha }} # Tag with commit SHA for unique versioning
+          platforms: linux/amd64 # Specify platform for compatibility
+
+      - name: Verify Docker Image Push (Optional)
+        run: |
+          echo "Docker image ${{ env.DOCKER_IMAGE_FULL_NAME }}:latest pushed successfully!"
+          echo "You can view it on Docker Hub: https://hub.docker.com/r/${{ env.DOCKER_HUB_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}/tags"

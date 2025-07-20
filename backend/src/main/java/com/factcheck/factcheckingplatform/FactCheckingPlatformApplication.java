@@ -1,9 +1,8 @@
 package com.factcheck.factcheckingplatform;
 
-import com.factcheck.factcheckingplatform.model.Claim;
-import com.factcheck.factcheckingplatform.model.User;
-import com.factcheck.factcheckingplatform.repository.ClaimRepository;
-import com.factcheck.factcheckingplatform.repository.UserRepository;
+import java.util.Arrays;
+import java.util.HashSet;
+
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -13,9 +12,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.HashSet;
+import com.factcheck.factcheckingplatform.model.Claim;
+import com.factcheck.factcheckingplatform.model.User;
+import com.factcheck.factcheckingplatform.repository.ClaimRepository;
+import com.factcheck.factcheckingplatform.repository.UserRepository;
 
 @SpringBootApplication
 @EnableMethodSecurity // Enable method-level security for @PreAuthorize

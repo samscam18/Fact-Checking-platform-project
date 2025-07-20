@@ -3,20 +3,20 @@ name: Backend CI/CD
 on:
   push:
     branches:
-      - main # Trigger on pushes to the main branch
+      - main
     paths:
-      - 'backend/**' # Only run if changes are detected in the backend folder
+      - 'backend/**'
   pull_request:
     branches:
       - main
     paths:
       - 'backend/**'
-  workflow_dispatch: # Allows manual triggering from GitHub UI
+  workflow_dispatch:
 
 env:
   JAVA_VERSION: '17'
   SPRING_BOOT_APP_PATH: './backend'
-  DOCKER_IMAGE_NAME: 'fact-checking-backend' # This is just the base name, not the full name
+  DOCKER_IMAGE_NAME: 'fact-checking-backend' # Base image name
   DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_PASSWORD }}
 
@@ -50,7 +50,7 @@ jobs:
         with:
           context: ${{ env.SPRING_BOOT_APP_PATH }}
           push: true
-          # Construct the full image tag directly here, using the env.DOCKER_IMAGE_NAME
+          # Construct the full image tag directly here using the env.DOCKER_IMAGE_NAME
           # IMPORTANT: REPLACE 'samscam18' WITH YOUR ACTUAL DOCKER HUB USERNAME
           tags: |
             samscam18/${{ env.DOCKER_IMAGE_NAME }}:latest

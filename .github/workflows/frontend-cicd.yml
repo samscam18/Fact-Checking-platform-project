@@ -15,14 +15,13 @@ on:
 
 env:
   FRONTEND_APP_PATH: './frontend'
-  DOCKER_IMAGE_NAME: 'fact-checking-frontend' # Keep this for reference
+  DOCKER_IMAGE_NAME: 'fact-checking-frontend' # This is just the base name, not the full name
   DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_PASSWORD }}
-  
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest # Use a fresh Ubuntu runner
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
@@ -39,10 +38,11 @@ jobs:
         with:
           context: ${{ env.FRONTEND_APP_PATH }}
           push: true
+          # Construct the full image tag directly here, using the env.DOCKER_IMAGE_NAME
           # IMPORTANT: REPLACE 'samscam18' WITH YOUR ACTUAL DOCKER HUB USERNAME
           tags: |
-            samscam18/${{ env.DOCKER_IMAGE_NAME }}:latest # <--- CORRECTED TAGS
-            samscam18/${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }} # <--- CORRECTED TAGS
+            samscam18/${{ env.DOCKER_IMAGE_NAME }}:latest
+            samscam18/${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
           platforms: linux/amd64
 
       - name: Verify Docker Image Push (Optional)

@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fact-Checking Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .header-section {
+            background-color: #ef4444; /* Red for urgency/fact-checking */
+            color: white;
+            padding: 2rem 1.5rem;
+            border-radius: 0.75rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .button {
+            background-color: #6366f1; /* Indigo */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+        .button:hover {
+            background-color: #4f46e5; /* Darker indigo */
+        }
+        .table-header {
+            background-color: #fee2e2; /* Light red */
+            color: #b91c1c; /* Darker red */
+        }
+        .status-pending { background-color: #fef3c7; color: #d97706; } /* Yellow */
+        .status-under-review { background-color: #bfdbfe; color: #2563eb; } /* Blue */
+        .status-fact-checked { background-color: #d1fae5; color: #059669; } /* Green */
+        .verdict-true { background-color: #d1fae5; color: #059669; }
+        .verdict-false { background-color: #fee2e2; color: #b91c1c; }
+        .verdict-misleading { background-color: #fef3c7; color: #d97706; }
+        .verdict-partially-true { background-color: #e0e7ff; color: #4f46e5; }
+
+        .message-box {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: none; /* Hidden by default */
+        }
+        .message-box.show {
+            display: block;
+        }
+        .message-box.success {
+            border-color: #059669;
+            background-color: #d1fae5;
+            color: #059669;
+        }
+        .message-box.error {
+            border-color: #b91c1c;
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 2s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container">
+        <header class="header-section">
+            <h1 class="text-4xl font-bold mb-2">Fact-Checking Platform</h1>
+            <p class="text-lg">Combatting misinformation with community verification.</p>
+        </header>
+
+        <main>
+            <!-- Login/User Info Section -->
+            <section class="card">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">User Authentication</h2>
+                <div id="authSection">
+                    <div class="mb-4">
+                        <label for="username" class="block text-gray-700 text-sm font-bold mb-2">Username:</label>
+                        <input type="text" id="username" value="user" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline rounded-md">
+                    </div>
+                    <div class="mb-6">
+                        <label for="password" class="block text-gray-700 text-sm font-bold mb-2">Password:</label>
+                        <input type="password" id="password" value="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline rounded-md">
+                    </div>
+                    <button id="loginBtn" class="button mr-2">Login as User (user/password)</button>
+                    <button id="loginFactCheckerBtn" class="button">Login as Fact-Checker (factchecker/factcheckpass)</button>
+                    <div id="loginMessage" class="message-box"></div>
+                </div>
+                <div id="userInfo" class="hidden">
+                    <p class="text-lg">Logged in as: <span id="loggedInUser" class="font-bold"></span> (<span id="loggedInRoles" class="font-bold"></span>)</p>
+                    <button id="logoutBtn" class="button mt-4">Logout</button>
+                </div>
+            </section>
+
+            <!-- Submit New Claim Section -->
+            <section class="card" id="submitClaimSection">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">Submit a New Claim</h2>
+                <form id="submitClaimForm" class="space-y-4">
+                    <div>
+                        <label for="claimContent" class="block text-gray-700 text-sm font-bold mb-2">Claim Content:</label>
+                        <textarea id="claimContent" rows="4" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline rounded-md" placeholder="Enter the claim to be fact-checked..."></textarea>
+                    </div>
+                    <div>
+                        <label for="claimSourceUrl" class="block text-gray-700 text-sm font-bold mb-2">Source URL (Optional):</label>
+                        <input type="url" id="claimSourceUrl" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline rounded-md" placeholder="e.g., https://example.com/article">
+                    </div>
+                    <button type="submit" class="button">Submit Claim</button>
+                    <div id="submitClaimMessage" class="message-box"></div>
+                </form>
+            </section>
+
+            <!-- All Claims Section -->
+            <section class="card">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">All Claims</h2>
+                <button id="fetchAllClaimsBtn" class="button mb-4">Fetch All Claims</button>
+                <div id="claimsContainer" class="overflow-x-auto">
+                    <table class="min-w-full bg-white rounded-md overflow-hidden">
+                        <thead>
+                            <tr class="table-header text-left">
+                                <th class="py-3 px-4">ID</th>
+                                <th class="py-3 px-4">Submitted By</th>
+                                <th class="py-3 px-4">Content</th>
+                                <th class="py-3 px-4">Source URL</th>
+                                <th class="py-3 px-4">Submission Time</th>
+                                <th class="py-3 px-4">Status</th>
+                                <th class="py-3 px-4">Verdict</th>
+                                <th class="py-3 px-4">Explanation</th>
+                                <th class="py-3 px-4">Verified By</th>
+                                <th class="py-3 px-4">Verification Time</th>
+                                <th class="py-3 px-4 fact-checker-only hidden">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="claimsTableBody">
+                            <!-- Claims data will be loaded here -->
+                            <tr>
+                                <td colspan="11" class="text-center py-4 text-gray-500">Click "Fetch All Claims" to load.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Fact-Checker Actions Section -->
+            <section class="card fact-checker-only hidden" id="factCheckerActionsSection">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">Fact-Checker Actions</h2>
+                <p class="text-gray-700 mb-4">Select a claim from the table above and use its ID to update its status and verdict.</p>
+                <form id="updateClaimForm" class="space-y-4">
+                    <div>
+                        <label for="claimIdToUpdate" class="block text-gray-700 text-sm font-bold mb-2">Claim ID:</label>
+                        <input type="number" id="claimIdToUpdate" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline rounded-md" placeholder="Enter Claim ID">
+                    </div>
+                    <div>
+                        <label for="updateStatus" class="block text-gray-700 text-sm font-bold mb-2">Status:</label>
+                        <select id="updateStatus" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline rounded-md">
+                            <option value="Under Review">Under Review</option>
+                            <option value="Fact-Checked">Fact-Checked</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="updateVerdict" class="block text-gray-700 text-sm font-bold mb-2">Verdict:</label>
+                        <select id="updateVerdict" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline rounded-md">
+                            <option value="">Select Verdict</option>
+                            <option value="True">True</option>
+                            <option value="False">False</option>
+                            <option value="Misleading">Misleading</option>
+                            <option value="Partially True">Partially True</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="updateExplanation" class="block text-gray-700 text-sm font-bold mb-2">Explanation:</label>
+                        <textarea id="updateExplanation" rows="3" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline rounded-md" placeholder="Provide a detailed explanation for the verdict..."></textarea>
+                    </div>
+                    <button type="submit" class="button">Update Claim</button>
+                    <div id="updateClaimMessage" class="message-box"></div>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // --- Global State ---
+        let currentUser = null; // Stores { username, roles, authHeader }
+        const BASE_URL = 'http://localhost:30318/api/claims';
+
+        // --- Mock Data (for demonstration without a running backend) ---
+        const mockClaims = [
+            { id: 1, submittedBy: "user", content: "Drinking hot water cures COVID-19.", sourceUrl: "https://example.com/fake-news-1", submissionTimestamp: "2025-07-19T10:00:00", status: "Pending", verdict: null, explanation: null, verifiedBy: null, verificationTimestamp: null },
+            { id: 2, submittedBy: "user", content: "Bengaluru Metro Phase 3 will be completed by 2026.", sourceUrl: "https://bmtc.gov.in/news/metro-phase-3-update", submissionTimestamp: "2025-07-18T15:30:00", status: "Pending", verdict: null, explanation: null, verifiedBy: null, verificationTimestamp: null },
+            { id: 3, submittedBy: "user", content: "AI will replace all software developers by 2030.", sourceUrl: "https://techcrunch.com/article/ai-job-impact", submissionTimestamp: "2025-07-17T09:00:00", status: "Fact-Checked", verdict: "Misleading", explanation: "While AI will automate some tasks, it's more likely to augment human roles rather than fully replace them, creating new job categories.", verifiedBy: "factchecker", verificationTimestamp: "2025-07-17T14:00:00" },
+            { id: 4, submittedBy: "user", content: "Bengaluru's air quality is the worst in India.", sourceUrl: "https://news.example.com/pollution-report", submissionTimestamp: "2025-07-16T11:45:00", status: "Fact-Checked", verdict: "Partially True", explanation: "Bengaluru's air quality can be poor, especially during certain seasons, but it's not consistently the worst across all metrics compared to other major Indian cities.", verifiedBy: "factchecker", verificationTimestamp: "2025-07-16T18:00:00" }
+        ];
+
+        // --- DOM Elements ---
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginFactCheckerBtn = document.getElementById('loginFactCheckerBtn');
+        const loginMessage = document.getElementById('loginMessage');
+        const userInfo = document.getElementById('userInfo');
+        const loggedInUserSpan = document.getElementById('loggedInUser');
+        const loggedInRolesSpan = document.getElementById('loggedInRoles');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const submitClaimForm = document.getElementById('submitClaimForm');
+        const claimContentInput = document.getElementById('claimContent');
+        const claimSourceUrlInput = document.getElementById('claimSourceUrl');
+        const submitClaimMessage = document.getElementById('submitClaimMessage');
+        const fetchAllClaimsBtn = document.getElementById('fetchAllClaimsBtn');
+        const claimsTableBody = document.getElementById('claimsTableBody');
+        const factCheckerActionsSection = document.getElementById('factCheckerActionsSection');
+        const updateClaimForm = document.getElementById('updateClaimForm');
+        const claimIdToUpdateInput = document.getElementById('claimIdToUpdate');
+        const updateStatusSelect = document.getElementById('updateStatus');
+        const updateVerdictSelect = document.getElementById('updateVerdict');
+        const updateExplanationTextarea = document.getElementById('updateExplanation');
+        const updateClaimMessage = document.getElementById('updateClaimMessage');
+
+        // --- Utility Functions ---
+        function showMessage(element, message, type) {
+            element.textContent = message;
+            element.className = `message-box show ${type}`;
+            setTimeout(() => {
+                element.className = 'message-box';
+            }, 5000);
+        }
+
+        function updateUIForRoles() {
+            const factCheckerElements = document.querySelectorAll('.fact-checker-only');
+            if (currentUser && currentUser.roles.includes('ROLE_FACT_CHECKER')) {
+                factCheckerElements.forEach(el => el.classList.remove('hidden'));
+            } else {
+                factCheckerElements.forEach(el => el.classList.add('hidden'));
+            }
+            // Hide submit claim section if not logged in
+            if (currentUser) {
+                document.getElementById('submitClaimSection').classList.remove('hidden');
+            } else {
+                document.getElementById('submitClaimSection').classList.add('hidden');
+            }
+        }
+
+        function setLoggedInUser(username, roles, authHeader) {
+            currentUser = { username, roles, authHeader };
+            document.getElementById('authSection').classList.add('hidden');
+            userInfo.classList.remove('hidden');
+            loggedInUserSpan.textContent = username;
+            loggedInRolesSpan.textContent = roles.join(', ');
+            updateUIForRoles();
+            fetchAllClaims(); // Fetch claims after login
+        }
+
+        function logoutUser() {
+            currentUser = null;
+            document.getElementById('authSection').classList.remove('hidden');
+            userInfo.classList.add('hidden');
+            loggedInUserSpan.textContent = '';
+            loggedInRolesSpan.textContent = '';
+            claimsTableBody.innerHTML = '<tr><td colspan="11" class="text-center py-4 text-gray-500">Please log in to view claims.</td></tr>';
+            updateUIForRoles();
+        }
+
+        // --- Event Listeners ---
+        loginBtn.addEventListener('click', () => handleLogin('user', 'password'));
+        loginFactCheckerBtn.addEventListener('click', () => handleLogin('factchecker', 'factcheckpass'));
+        logoutBtn.addEventListener('click', logoutUser);
+        submitClaimForm.addEventListener('submit', handleSubmitClaim);
+        fetchAllClaimsBtn.addEventListener('click', fetchAllClaims);
+        updateClaimForm.addEventListener('submit', handleUpdateClaim);
+
+        // --- Core Functions ---
+
+        /**
+         * Handles user login (simulated or actual).
+         * @param {string} user - The username.
+         * @param {string} pass - The password.
+         */
+        async function handleLogin(user, pass) {
+            usernameInput.value = user;
+            passwordInput.value = pass;
+
+            // In a real application, you'd send a POST request to /login or similar
+            // and receive a JWT or session token. For this demo, we simulate.
+            const authHeader = 'Basic ' + btoa(`${user}:${pass}`);
+
+            try {
+                // Simulate API call to verify credentials
+                // This call will fail if the backend is not running or credentials are wrong
+                const response = await fetch(`${BASE_URL}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': authHeader,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const roles = (user === 'factchecker') ? ['ROLE_USER', 'ROLE_FACT_CHECKER'] : ['ROLE_USER'];
+                    setLoggedInUser(user, roles, authHeader);
+                    showMessage(loginMessage, `Logged in as ${user}!`, 'success');
+                } else {
+                    const errorData = await response.json();
+                    showMessage(loginMessage, `Login failed: ${errorData.message || response.statusText}. Check username/password or backend status.`, 'error');
+                    console.error('Login failed:', response.status, errorData);
+                    // Fallback to mock login if backend is not running or credentials are wrong
+                    console.warn('Backend authentication failed, using mock login for demo.');
+                    const roles = (user === 'factchecker') ? ['ROLE_USER', 'ROLE_FACT_CHECKER'] : ['ROLE_USER'];
+                    setLoggedInUser(user, roles, authHeader);
+                    showMessage(loginMessage, `Logged in as ${user} (Mock)!`, 'success');
+                }
+            } catch (error) {
+                // Fallback to mock login if backend is not reachable at all
+                console.warn('Backend not reachable for login, using mock login:', error);
+                const roles = (user === 'factchecker') ? ['ROLE_USER', 'ROLE_FACT_CHECKER'] : ['ROLE_USER'];
+                setLoggedInUser(user, roles, authHeader);
+                showMessage(loginMessage, `Logged in as ${user} (Mock)!`, 'success');
+            }
+        }
+
+        /**
+         * Handles submission of a new claim.
+         */
+        async function handleSubmitClaim(event) {
+            event.preventDefault();
+
+            if (!currentUser) {
+                showMessage(submitClaimMessage, 'Please log in to submit a claim.', 'error');
+                return;
+            }
+
+            const content = claimContentInput.value.trim();
+            const sourceUrl = claimSourceUrlInput.value.trim();
+
+            if (!content) {
+                showMessage(submitClaimMessage, 'Claim content cannot be empty.', 'error');
+                return;
+            }
+
+            const newClaim = { content, sourceUrl };
+
+            try {
+                const response = await fetch(BASE_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': currentUser.authHeader
+                    },
+                    body: JSON.stringify(newClaim)
+                });
+
+                if (response.ok) {
+                    const savedClaim = await response.json();
+                    showMessage(submitClaimMessage, `Claim submitted successfully! ID: ${savedClaim.id}`, 'success');
+                    claimContentInput.value = '';
+                    claimSourceUrlInput.value = '';
+                    fetchAllClaims(); // Refresh list
+                } else {
+                    const errorData = await response.json();
+                    showMessage(submitClaimMessage, `Failed to submit claim: ${errorData.message || response.statusText}`, 'error');
+                    console.error('Submit claim failed:', response.status, errorData);
+                }
+            } catch (error) {
+                console.error('Error submitting claim:', error);
+                // Simulate submission for demo if backend is down
+                const newId = mockClaims.length > 0 ? Math.max(...mockClaims.map(c => c.id)) + 1 : 1;
+                const mockSavedClaim = {
+                    id: newId,
+                    submittedBy: currentUser.username,
+                    content,
+                    sourceUrl,
+                    submissionTimestamp: new Date().toISOString(),
+                    status: "Pending",
+                    verdict: null,
+                    explanation: null,
+                    verifiedBy: null,
+                    verificationTimestamp: null
+                };
+                mockClaims.push(mockSavedClaim);
+                showMessage(submitClaimMessage, `Claim submitted successfully (Mock)! ID: ${mockSavedClaim.id}`, 'success');
+                claimContentInput.value = '';
+                claimSourceUrlInput.value = '';
+                fetchAllClaims(); // Refresh list
+            }
+        }
+
+        /**
+         * Fetches and displays all claims.
+         */
+        async function fetchAllClaims() {
+            claimsTableBody.innerHTML = '<tr><td colspan="11" class="text-center py-4 text-gray-500">Loading claims...</td></tr>';
+
+            if (!currentUser) {
+                claimsTableBody.innerHTML = '<tr><td colspan="11" class="text-center py-4 text-gray-500">Please log in to view claims.</td></tr>';
+                return;
+            }
+
+            try {
+                const response = await fetch(BASE_URL, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': currentUser.authHeader,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    renderClaimsTable(data);
+                } else {
+                    const errorData = await response.json();
+                    showMessage(loginMessage, `Failed to fetch claims: ${errorData.message || response.statusText}. Please log in again.`, 'error');
+                    console.error('Fetch claims failed:', response.status, errorData);
+                    // Fallback to mock data if fetch fails
+                    renderClaimsTable(mockClaims);
+                }
+            } catch (error) {
+                console.error('Error fetching claims:', error);
+                // Fallback to mock data if backend is not reachable
+                renderClaimsTable(mockClaims);
+            }
+        }
+
+        /**
+         * Renders the claims data into the table.
+         * @param {Array<Object>} claims - Array of claim objects.
+         */
+        function renderClaimsTable(claims) {
+            claimsTableBody.innerHTML = ''; // Clear existing rows
+
+            if (claims.length === 0) {
+                claimsTableBody.innerHTML = '<tr><td colspan="11" class="text-center py-4 text-gray-500">No claims available.</td></tr>';
+                return;
+            }
+
+            claims.forEach(claim => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-200 hover:bg-gray-50';
+                const statusClass = `status-${claim.status ? claim.status.toLowerCase().replace(/\s/g, '-') : 'pending'}`;
+                const verdictClass = `verdict-${claim.verdict ? claim.verdict.toLowerCase().replace(/\s/g, '-') : ''}`;
+
+                row.innerHTML = `
+                    <td class="py-3 px-4">${claim.id}</td>
+                    <td class="py-3 px-4">${claim.submittedBy}</td>
+                    <td class="py-3 px-4 max-w-xs overflow-hidden text-ellipsis whitespace-nowrap" title="${claim.content}">${claim.content}</td>
+                    <td class="py-3 px-4 max-w-xs overflow-hidden text-ellipsis whitespace-nowrap">
+                        ${claim.sourceUrl ? `<a href="${claim.sourceUrl}" target="_blank" class="text-blue-600 hover:underline">${new URL(claim.sourceUrl).hostname}</a>` : 'N/A'}
+                    </td>
+                    <td class="py-3 px-4">${new Date(claim.submissionTimestamp).toLocaleString()}</td>
+                    <td class="py-3 px-4"><span class="px-2 py-1 rounded-full text-xs font-semibold ${statusClass}">${claim.status}</span></td>
+                    <td class="py-3 px-4"><span class="px-2 py-1 rounded-full text-xs font-semibold ${verdictClass}">${claim.verdict || 'N/A'}</span></td>
+                    <td class="py-3 px-4 max-w-xs overflow-hidden text-ellipsis whitespace-nowrap" title="${claim.explanation || 'N/A'}">${claim.explanation || 'N/A'}</td>
+                    <td class="py-3 px-4">${claim.verifiedBy || 'N/A'}</td>
+                    <td class="py-3 px-4">${claim.verificationTimestamp ? new Date(claim.verificationTimestamp).toLocaleString() : 'N/A'}</td>
+                    <td class="py-3 px-4 fact-checker-only ${currentUser && currentUser.roles.includes('ROLE_FACT_CHECKER') ? '' : 'hidden'}">
+                        <button class="button text-sm px-2 py-1" onclick="populateUpdateForm(${claim.id}, '${claim.status}', '${claim.verdict || ''}', '${claim.explanation ? claim.explanation.replace(/'/g, "\\'") : ''}')">Edit</button>
+                        <button class="button text-sm px-2 py-1 ml-1" onclick="handleAIAnalyze(${claim.id}, '${claim.content.replace(/'/g, "\\'")}')">AI Analyze</button>
+                    </td>
+                `;
+                claimsTableBody.appendChild(row);
+            });
+        }
+
+        /**
+         * Populates the update claim form with existing claim data or AI suggestions.
+         * @param {number} id - Claim ID.
+         * @param {string} status - Current status.
+         * @param {string} verdict - Current verdict.
+         * @param {string} explanation - Current explanation.
+         */
+        function populateUpdateForm(id, status, verdict, explanation) {
+            claimIdToUpdateInput.value = id;
+            updateStatusSelect.value = status;
+            updateVerdictSelect.value = verdict;
+            updateExplanationTextarea.value = explanation;
+            // Scroll to the update section
+            factCheckerActionsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        /**
+         * Handles updating a claim's status and verdict.
+         */
+        async function handleUpdateClaim(event) {
+            event.preventDefault();
+
+            if (!currentUser || !currentUser.roles.includes('ROLE_FACT_CHECKER')) {
+                showMessage(updateClaimMessage, 'You must be logged in as a Fact-Checker to update claims.', 'error');
+                return;
+            }
+
+            const claimId = claimIdToUpdateInput.value;
+            const status = updateStatusSelect.value;
+            const verdict = updateVerdictSelect.value;
+            const explanation = updateExplanationTextarea.value.trim();
+
+            if (!claimId || !status || !verdict || !explanation) {
+                showMessage(updateClaimMessage, 'Please fill all fields for updating a claim.', 'error');
+                return;
+            }
+
+            const updateData = { status, verdict, explanation };
+
+            try {
+                const response = await fetch(`${BASE_URL}/${claimId}/verify`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': currentUser.authHeader
+                    },
+                    body: JSON.stringify(updateData)
+                });
+
+                if (response.ok) {
+                    const updatedClaim = await response.json();
+                    showMessage(updateClaimMessage, `Claim ID ${updatedClaim.id} updated successfully!`, 'success');
+                    fetchAllClaims(); // Refresh list
+                } else {
+                    const errorData = await response.json();
+                    showMessage(updateClaimMessage, `Failed to update claim: ${errorData.message || response.statusText}`, 'error');
+                    console.error('Update claim failed:', response.status, errorData);
+                }
+            } catch (error) {
+                console.error('Error updating claim:', error);
+                // Simulate update for demo if backend is down
+                const index = mockClaims.findIndex(c => c.id == claimId);
+                if (index !== -1) {
+                    mockClaims[index].status = status;
+                    mockClaims[index].verdict = verdict;
+                    mockClaims[index].explanation = explanation;
+                    mockClaims[index].verifiedBy = currentUser.username;
+                    mockClaims[index].verificationTimestamp = new Date().toISOString();
+                    showMessage(updateClaimMessage, `Claim ID ${claimId} updated successfully (Mock)!`, 'success');
+                    fetchAllClaims(); // Refresh list
+                } else {
+                    showMessage(updateClaimMessage, `Claim ID ${claimId} not found in mock data.`, 'error');
+                }
+            }
+        }
+
+        /**
+         * Handles AI analysis for a claim.
+         * @param {number} claimId - The ID of the claim to analyze.
+         * @param {string} claimContent - The content of the claim.
+         */
+        async function handleAIAnalyze(claimId, claimContent) {
+            if (!currentUser || !currentUser.roles.includes('ROLE_FACT_CHECKER')) {
+                showMessage(updateClaimMessage, 'You must be logged in as a Fact-Checker to use AI analysis.', 'error');
+                return;
+            }
+
+            showMessage(updateClaimMessage, 'Analyzing claim with AI... <span class="loading-spinner"></span>', 'info');
+            // Add a loading spinner to the button itself
+            const aiButton = event.target;
+            aiButton.disabled = true;
+            aiButton.innerHTML = 'AI Analyzing... <span class="loading-spinner"></span>';
+
+
+            try {
+                const response = await fetch(`${BASE_URL}/${claimId}/ai-check`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': currentUser.authHeader
+                    }
+                });
+
+                if (response.ok) {
+                    const aiSuggestion = await response.json();
+                    showMessage(updateClaimMessage, 'AI analysis complete! Review suggestions below.', 'success');
+                    // Populate the update form with AI suggestions
+                    populateUpdateForm(claimId, 'Under Review', aiSuggestion.verdict, aiSuggestion.explanation);
+                } else {
+                    const errorData = await response.json();
+                    showMessage(updateClaimMessage, `AI analysis failed: ${errorData.message || response.statusText}`, 'error');
+                    console.error('AI analysis failed:', response.status, errorData);
+                }
+            } catch (error) {
+                console.error('Error during AI analysis:', error);
+                // Simulate AI response for demo if backend is down or Gemini call fails
+                const mockAiVerdict = Math.random() > 0.5 ? "True" : "False";
+                const mockAiExplanation = `AI Mock Analysis: This claim is ${mockAiVerdict.toLowerCase()} based on simulated data. Further human verification is recommended.`;
+                showMessage(updateClaimMessage, `AI analysis complete (Mock)! Review suggestions below.`, 'success');
+                populateUpdateForm(claimId, 'Under Review', mockAiVerdict, mockAiExplanation);
+
+            } finally {
+                aiButton.disabled = false;
+                aiButton.innerHTML = 'AI Analyze';
+            }
+        }
+
+        // Initial UI update
+        updateUIForRoles();
+    </script>
+</body>
+</html>

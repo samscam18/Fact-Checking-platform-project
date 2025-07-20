@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fact-checking-backend-deployment
+  labels:
+    app: fact-checking-backend
+spec:
+  replicas: 1 # Start with 1 replica (pod). Increase this number for more instances.
+  selector:
+    matchLabels:
+      app: fact-checking-backend
+  template:
+    metadata:
+      labels:
+        app: fact-checking-backend
+    spec:
+      containers:
+        - name: fact-checking-backend
+          image: fact-checking-backend:latest # Use the image name and tag you built
+          imagePullPolicy: Never # Crucial for local testing: tells Kubernetes to *never* pull from a remote registry, use local image
+          ports:
+            - containerPort: 8081 # The port your Spring Boot app exposes
+          env: # Environment variables for Spring Boot (optional, but good practice)
+            # Database configuration (for H2 in-memory, these are defaults but good to be explicit)
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:h2:mem:factcheckdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "sa"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "password"
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: "update"
+            - name: SERVER_PORT
+              value: "8081"
+            # Spring Security in-memory user credentials (NEVER use {noop} or hardcoded passwords in production)
+            - name: SPRING_SECURITY_USER_NAME
+              value: "user"
+            - name: SPRING_SECURITY_USER_PASSWORD
+              value: "{noop}password" # {noop} is for plain text passwords in dev. Use encoded in production!
+            - name: SPRING_SECURITY_USER_ROLES
+              value: "USER"
+            - name: SPRING_SECURITY_USER_NAME_FACTCHECKER
+              value: "factchecker"
+            - name: SPRING_SECURITY_USER_PASSWORD_FACTCHECKER
+              value: "{noop}factcheckpass"
+            - name: SPRING_SECURITY_USER_ROLES_FACTCHECKER
+              value: "USER,FACT_CHECKER"
+          # Optional: Health checks (important for production)
+          # livenessProbe:
+          #   httpGet:
+          #     path: /actuator/health # Requires Spring Boot Actuator dependency
+          #     port: 8081
+          #   initialDelaySeconds: 30
+          #   periodSeconds: 10
+          # readinessProbe:
+          #   httpGet:
+          #     path: /actuator/health
+          #     port: 8081
+          #   initialDelaySeconds: 15
+          #   periodSeconds: 10
+          # Optional: Resource requests and limits
+          # resources:
+          #   requests:
+          #     memory: "512Mi"
+          #     cpu: "500m"
+          #   limits:
+          #     memory: "1024Mi"
+          #     cpu: "1000m"

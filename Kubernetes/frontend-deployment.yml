@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fact-checking-frontend-deployment
+  labels:
+    app: fact-checking-frontend
+spec:
+  replicas: 1 # Start with 1 replica
+  selector:
+    matchLabels:
+      app: fact-checking-frontend
+  template:
+    metadata:
+      labels:
+        app: fact-checking-frontend
+    spec:
+      containers:
+        - name: fact-checking-frontend
+          image: fact-checking-frontend:latest # Use the image name and tag you built
+          imagePullPolicy: Never # Crucial for local testing: use local image
+          ports:
+            - containerPort: 80 # Nginx serves on port 80 by default
